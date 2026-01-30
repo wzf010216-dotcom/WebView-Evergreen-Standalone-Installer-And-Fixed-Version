@@ -1,0 +1,36 @@
+name: WebView2 Auto Archive
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 1 * * 1"   # weekly, Monday 01:00 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Run script
+        id: check
+        run: python scripts/check_webview2.py
+
+      - name: Create Release
+        if: steps.check.outputs.updated == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.check.outputs.version }}
+          name: WebView2 Fixed ${{ steps.check.outputs.version }}
+          files: dist/*
+          fail_on_unmatched_files: true
